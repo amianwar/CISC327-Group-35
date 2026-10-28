@@ -1,7 +1,7 @@
 # Tests
 
 def test_listing_all_equipment(client):
-    response=client.get("/rentals")
+    response=client.get("/equipment")
     assert response.status_code == 200
     data = response.get_json();
 
