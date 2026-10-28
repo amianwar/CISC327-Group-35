@@ -5,7 +5,7 @@ def test_listing_all_equipment(client):
     assert response.status_code == 200
     data = response.get_json();
 
-'''def test_add_equipment_item(client):
+def test_add_equipment_item(client):
     payload = {
         "name": "Kayak",
         "category": "Boats",
@@ -13,4 +13,5 @@ def test_listing_all_equipment(client):
     }
 
     create_item = client.post("/equipment", json=payload)
-    assert '''
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
