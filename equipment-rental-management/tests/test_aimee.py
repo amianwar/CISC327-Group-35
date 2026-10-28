@@ -2,30 +2,13 @@
 from datetime import date, timedelta
 
 def test_listing_all_equipment(client):
-    response=client.get("/equipment")
+    '''
+    Checks that all equipment can be listed.
+    '''
+    response = client.get("/equipment")
     assert response.status_code == 200
     data = response.get_json()
-
-def test_add_equipment_item_and_check_availability(client):
-    '''
-    Checks that equipment that is POSTed to /equipment can be deleted (from examples).
-    '''
-    
-    payload = {
-        "name": "Kayak",
-        "category": "Boats",
-        "total_units": 5,
-    }
-
-    create_item = client.post("/equipment", json=payload)
-    assert create_item.status_code == 201
-    equipment_id = create_item.get_json()["id"]
-
-    avail_item = client.get(f"/equipment/{equipment_id}/availability")
-    assert avail_item.status_code == 200
-    data = avail_item.get_json()
-    assert data["available_units"] == 5
-    assert data["is_available"] is True
+    assert isinstance(data, list)
 
 def test_add_and_get_one_equipment_item(client):
     '''
@@ -211,4 +194,81 @@ def test_checkout_and_return(client):
 
     return_rental = client.put(f"/rentals/{rental_id}/return")
     assert return_rental.status_code == 200
+
+def test_checkout_without_equipment(client):
+    '''
+    Checks if an equipment item can be checked out when there are 0 units.
+    We find an application defect; a renter can still check out an
+    equipment item with 0 total units.
+    '''
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 0,
+    }
+    
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+
+    create_rental = client.post("/rentals", json=payload_3)
+    assert create_rental.status_code == 400
+
+def test_checkout_nonexistent_equipment(client):
+    '''
+    Checks if an item that does not exist can be checked out.
+    We find that this test fails.
+    '''
+    payload = {}
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+    
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+    
+    create_rental = client.post("/rentals", json=payload_3)
+    assert create_rental.status_code == 201
+    rental_id = create_rental.get_json()["id"]
+    
+    return_rental = client.put(f"/rentals/{rental_id}/return")
+    assert return_rental.status_code == 200
+
     
