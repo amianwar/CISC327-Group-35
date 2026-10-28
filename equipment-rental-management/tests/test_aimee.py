@@ -126,3 +126,89 @@ def test_add_two_items_delete_one(client):
     get_canoe = client.get(f"/equipment/{canoe_id}")
     assert get_canoe.status_code == 200
 
+def test_add_and_checkout(client):
+    '''
+    Checks that a renter and item can be POSTed to /renters and /equipment
+    (respectively), and that a rental can be POSTed to /rentals.
+    '''
+
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
+                
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+
+    create_rental = client.post("/rentals", json=payload_3)
+    assert create_rental.status_code == 201
+    rental_id = create_rental.get_json()["id"]
+
+    rental_data = create_rental.get_json()
+    assert rental_data["equipment_id"] == equipment_id
+    assert rental_data["renter_id"] == renter_id
+
+def test_checkout_and_return(client):
+    '''
+    Checks that a rental can be checked out (POSTed to /rentals) and then
+    returned (PUT to /rentals).
+    '''
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
+    
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+    
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+    
+    create_rental = client.post("/rentals", json=payload_3)
+    assert create_rental.status_code == 201
+    rental_id = create_rental.get_json()["id"]
+
+    return_rental = client.put(f"/rentals/{rental_id}/return")
+    assert return_rental.status_code == 200
+    
