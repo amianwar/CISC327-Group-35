@@ -121,6 +121,33 @@ def test_look_up_rental_by_renter(client):
 
     create_renter = client.post("/renters", json=renter_payload)
     assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+
+    equipment_payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 2,
+    }
+
+    create_equipment = client.post("/equipment", json=equipment_payload)
+    assert create_equipment.status_code == 201
+    equipment_id = create_equipment.get_json()["id"]
+
+    rental_payload = {
+        "renter_id": renter_id,
+        "equipment_id": equipment_id,
+        "rental_date": "2024-01-01",
+        "return_date": "2024-01-05"
+    }
+    
+    create_rental = client.post("/rentals", json=rental_payload)
+    assert create_rental.status_code == 201
+    rental_id = create_rental.get_json()["id"]
+
+    response = client.get(f"/rentals?renter_id={renter_id}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert isinstance(data, list)
 
 def test_look_up_rentals_for_renter_with_no_rentals(client):
     '''
