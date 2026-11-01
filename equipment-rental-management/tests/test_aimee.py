@@ -271,4 +271,95 @@ def test_checkout_nonexistent_equipment(client):
     return_rental = client.put(f"/rentals/{rental_id}/return")
     assert return_rental.status_code == 200
 
+def test_checkout_and_return_with_ID(client):
+    '''
+    Checks that the updated rental model and route are working, and allow for the
+    creation of a rental with an ID number that gets removed once the rental
+    has been returned.
+    '''
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
     
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+    
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "id_type": "Driver's Licence",
+        "id_number": 123456789,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+    
+    create_rental = client.post("/store_id", json=payload_3)
+    assert create_rental.status_code == 201
+    rental_id = create_rental.get_json()["id"]
+
+    created_rental = create_rental.get_json()
+    assert created_rental["id_number"] == 123456789
+    assert created_rental["id_type"] == "Driver's Licence"
+
+    return_rental = client.put(f"/store_id/{rental_id}/return")
+    assert return_rental.status_code == 200
+
+    returned_rental = return_rental.get_json()
+    assert returned_rental["id_number"] == 0
+
+def test_checkout_invalid_ID(client):
+    '''
+    Checks that the updated rental model and route are working by checking if
+    an invalid ID number (assuming that most ID numbers are at least 9 characters
+    in length) will be accepted.
+    '''
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
+    
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+    
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "id_type": "Driver's Licence",
+        "id_number": 12345,
+        "rental_date": date.today(),
+        "due_date": date.today() + timedelta(days=7),
+        "return_date": date.today() + timedelta(days=3),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+    
+    create_rental = client.post("/store_id", json=payload_3)
+    assert create_rental.status_code == 400

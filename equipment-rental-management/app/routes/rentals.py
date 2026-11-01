@@ -19,7 +19,6 @@ def list_rentals():
         results = [r for r in results if r.equipment_id == equipment_id]
     return jsonify([r.to_dict() for r in results])
 
-
 @rentals_bp.route("", methods=["POST"])
 def checkout_equipment():
     data = request.get_json()
