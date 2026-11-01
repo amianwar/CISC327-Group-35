@@ -37,6 +37,7 @@ app working without a REST client, and calls the same in-memory store.
 - **Equipment**: `id, name, category, total_units, available_units`
 - **Renter**: `id, name, email, membership_date`
 - **Rental**: `id, equipment_id, renter_id, rental_date, due_date, return_date`
+- **Store_ID**: `id, equipment_id, renter_id, id_type, id_number, rental_date, due_date, return_date`
 
 ## JSON API Endpoints
 
