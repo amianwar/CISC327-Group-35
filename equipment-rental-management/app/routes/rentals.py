@@ -8,6 +8,7 @@ from app.models.rental import Rental
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
+
 @rentals_bp.route("", methods=["GET"])
 def list_rentals():
     results = list(store.rentals.values())
@@ -19,12 +20,23 @@ def list_rentals():
         results = [r for r in results if r.equipment_id == equipment_id]
     return jsonify([r.to_dict() for r in results])
 
+
 @rentals_bp.route("", methods=["POST"])
 def checkout_equipment():
     data = request.get_json()
     item = store.equipment.get(data["equipment_id"])
     if item is None:
         return jsonify({"error": "Equipment not found"}), 404
+
+    try:
+        rental_date = date.fromisoformat(data["rental_date"]) 
+        if "rental_date" in data : date.today()
+        due_date = date.fromisoformat(data["due_date"]) 
+        if "due_date" in data : Rental.default_due_date()
+    except ValueError:
+        return jsonify({"error": "Dates must be in the format of YYYY-MM-DD"}), 400
+    if due_date < rental_date:
+        return jsonify({"error": "Due date cannot be before rental date"}), 400
 
     # BUG: does not check item.is_available — out-of-service equipment can
     # still be checked out. The check below is intentionally absent:
@@ -38,6 +50,7 @@ def checkout_equipment():
         equipment_id=data["equipment_id"],
         renter_id=data["renter_id"],
         due_date=Rental.default_due_date(),
+        rental_date =rental_date,
         deposit_amount=data.get("deposit_amount", 0.0),
     )
     store.rentals[rental_id] = rental
