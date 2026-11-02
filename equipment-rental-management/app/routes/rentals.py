@@ -65,6 +65,38 @@ def return_equipment(rental_id):
     if rental.return_date is not None:
         return jsonify({"error": "Rental already returned"}), 400
 
+    data = {}
+    if request.is_json:
+        data = request.get_json()
+
+    if "extend_days" in data:
+        days = data["extend_days"]
+        if days not in (1, 2):
+            return jsonify({"error": "Days must be extended by 1 or 2"}), 400
+
+        window_start = rental.due_date + timedelta(days=1)
+        window_end = rental.due_date + timedelta(days=days)
+
+        capacity = 1
+        item = store.equipment.get(rental.equipment_id)
+        if item is not None:
+            capacity = item.total_units
+
+        overlapping = [
+            other_rental for other_rental in store.rentals.values()
+            if other_rental.equipment_id == rental.equipment_id
+            and other_rental.id != rental.id
+            and other_rental.return_date is None
+            and other_rental.rental_date <= window_end
+            and other_rental.due_date >= window_start
+        ]
+
+        if len(overlapping) >= capacity:
+            return jsonify({"error": "Equipment is booked by another customer"}), 409
+
+        rental.due_date = rental.due_date + timedelta(days=days)
+        return jsonify(rental.to_dict())
+
     rental.return_date = date.today()
     item = store.equipment.get(rental.equipment_id)
     if item is not None:
