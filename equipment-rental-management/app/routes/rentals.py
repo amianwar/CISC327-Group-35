@@ -8,13 +8,14 @@ from app.models.rental import Rental
 rentals_bp = Blueprint("rentals", __name__, url_prefix="/rentals")
 
 
+
 @rentals_bp.route("", methods=["GET"])
 def list_rentals():
     results = list(store.rentals.values())
     renter_id = request.args.get("renter_id", type=int)
     equipment_id = request.args.get("equipment_id", type=int)
     if renter_id is not None:
-        results = [r for r in results if r.equipment_id == renter_id]
+        results = [r for r in results if r.renter_id == renter_id]
     if equipment_id is not None:
         results = [r for r in results if r.equipment_id == equipment_id]
     return jsonify([r.to_dict() for r in results])
@@ -27,6 +28,16 @@ def checkout_equipment():
     if item is None:
         return jsonify({"error": "Equipment not found"}), 404
 
+    try:
+        rental_date = date.fromisoformat(data["rental_date"]) 
+        if "rental_date" in data : date.today()
+        due_date = date.fromisoformat(data["due_date"]) 
+        if "due_date" in data : Rental.default_due_date()
+    except ValueError:
+        return jsonify({"error": "Dates must be in the format of YYYY-MM-DD"}), 400
+    if due_date < rental_date:
+        return jsonify({"error": "Due date cannot be before rental date"}), 400
+
     # BUG: does not check item.is_available — out-of-service equipment can
     # still be checked out. The check below is intentionally absent:
     #   if not item.is_available:
@@ -38,7 +49,8 @@ def checkout_equipment():
         id=rental_id,
         equipment_id=data["equipment_id"],
         renter_id=data["renter_id"],
-        due_date=Rental.default_due_date(),
+        due_date=due_date,
+        rental_date =rental_date,
         deposit_amount=data.get("deposit_amount", 0.0),
     )
     store.rentals[rental_id] = rental
@@ -52,6 +64,38 @@ def return_equipment(rental_id):
         return jsonify({"error": "Rental not found"}), 404
     if rental.return_date is not None:
         return jsonify({"error": "Rental already returned"}), 400
+
+    data = {}
+    if request.is_json:
+        data = request.get_json()
+
+    if "extend_days" in data:
+        days = data["extend_days"]
+        if days not in (1, 2):
+            return jsonify({"error": "Extensions must be 1 or 2 days"}), 400
+
+        window_start = rental.due_date + timedelta(days=1)
+        window_end = rental.due_date + timedelta(days=days)
+
+        capacity = 1
+        item = store.equipment.get(rental.equipment_id)
+        if item is not None:
+            capacity = item.total_units
+
+        overlapping = [
+            other_rental for other_rental in store.rentals.values()
+            if other_rental.equipment_id == rental.equipment_id
+            and other_rental.id != rental.id
+            and other_rental.return_date is None
+            and other_rental.rental_date <= window_end
+            and other_rental.due_date >= window_start
+        ]
+
+        if len(overlapping) >= capacity:
+            return jsonify({"error": "Equipment is booked by another customer"}), 409
+
+        rental.due_date = rental.due_date + timedelta(days=days)
+        return jsonify(rental.to_dict())
 
     rental.return_date = date.today()
     item = store.equipment.get(rental.equipment_id)
