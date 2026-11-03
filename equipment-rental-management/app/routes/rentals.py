@@ -15,7 +15,7 @@ def list_rentals():
     renter_id = request.args.get("renter_id", type=int)
     equipment_id = request.args.get("equipment_id", type=int)
     if renter_id is not None:
-        results = [r for r in results if r.equipment_id == renter_id]
+        results = [r for r in results if r.renter_id == renter_id]
     if equipment_id is not None:
         results = [r for r in results if r.equipment_id == equipment_id]
     return jsonify([r.to_dict() for r in results])
@@ -49,7 +49,7 @@ def checkout_equipment():
         id=rental_id,
         equipment_id=data["equipment_id"],
         renter_id=data["renter_id"],
-        due_date=Rental.default_due_date(),
+        due_date=due_date,
         rental_date =rental_date,
         deposit_amount=data.get("deposit_amount", 0.0),
     )
@@ -72,7 +72,7 @@ def return_equipment(rental_id):
     if "extend_days" in data:
         days = data["extend_days"]
         if days not in (1, 2):
-            return jsonify({"error": "Days must be extended by 1 or 2"}), 400
+            return jsonify({"error": "Extensions must be 1 or 2 days"}), 400
 
         window_start = rental.due_date + timedelta(days=1)
         window_end = rental.due_date + timedelta(days=days)
