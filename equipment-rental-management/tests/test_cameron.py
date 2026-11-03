@@ -223,7 +223,7 @@ def test_extend_rental_by_one_day(client):
 
 def test_extend_rental_by_over_two_days(client):
     '''
-    Checks that a rental cannot be extended by 2+ days.
+    Checks that a rental cannot be extended by more than 2 days.
     '''
 
     payload = {
