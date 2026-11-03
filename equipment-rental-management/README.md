@@ -53,8 +53,8 @@ app working without a REST client, and calls the same in-memory store.
 | GET | `/renters/<id>` | Get one renter |
 | PUT | `/renters/<id>` | Update a renter |
 | DELETE | `/renters/<id>` | Delete a renter |
-| POST | `/rentals` | Check out equipment (`equipment_id`, `renter_id`) |
-| PUT | `/rentals/<id>/return` | Return rented equipment |
+| POST | `/rentals` | Check out equipment (`equipment_id`, `renter_id` `rental_date`, `due_date`) |
+| PUT | `/rentals/<id>/return` | Return rented equipment, extend date by 1-2 days (`extend_days`) |
 | GET | `/rentals?renter_id=&equipment_id=` | Look up rentals |
 | POST | `/store_id` | Check out equipment with a renter's ID number and type (`equipment_id`, `renter_id`) |
 | PUT | `/store_id/<id>/return` | Return rented equipment and remove renter's ID number|
