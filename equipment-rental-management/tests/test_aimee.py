@@ -129,7 +129,7 @@ def test_add_and_checkout(client):
     payload_2 = {
         "name": "John Doe",
         "email": "johndoe@test.com",
-        "membership_date": date.today(),
+        "membership_date": date.today().isoformat(),
     }
 
     create_renter = client.post("/renters", json=payload_2)
@@ -139,9 +139,9 @@ def test_add_and_checkout(client):
     payload_3 = {
         "equipment_id": equipment_id,
         "renter_id": renter_id,
-        "rental_date": date.today(),
-        "due_date": date.today() + timedelta(days=7),
-        "return_date": date.today() + timedelta(days=3),
+        "rental_date": date.today().isoformat(),
+        "due_date": (date.today() + timedelta(days=7)).isoformat(),
+        "return_date": (date.today() + timedelta(days=3)).isoformat(),
         "deposit_amount": 0.0,
         "deposit_released": False,
     }
@@ -172,7 +172,7 @@ def test_checkout_and_return(client):
     payload_2 = {
         "name": "John Doe",
         "email": "johndoe@test.com",
-        "membership_date": date.today(),
+        "membership_date": date.today().isoformat(),
     }
     
     create_renter = client.post("/renters", json=payload_2)
@@ -182,9 +182,9 @@ def test_checkout_and_return(client):
     payload_3 = {
         "equipment_id": equipment_id,
         "renter_id": renter_id,
-        "rental_date": date.today(),
-        "due_date": date.today() + timedelta(days=7),
-        "return_date": date.today() + timedelta(days=3),
+        "rental_date": date.today().isoformat(),
+        "due_date": (date.today() + timedelta(days=7)).isoformat(),
+        "return_date": (date.today() + timedelta(days=3)).isoformat(),
         "deposit_amount": 0.0,
         "deposit_released": False,
     }
@@ -196,7 +196,6 @@ def test_checkout_and_return(client):
     return_rental = client.put(f"/rentals/{rental_id}/return")
     assert return_rental.status_code == 200
 
-@pytest.mark.xfail(reason="This test is expected to fail because the application currently allows rental creation with 0 units of equipment.")
 def test_checkout_without_equipment(client):
     '''
     Checks if an equipment item can be checked out when there are 0 units.
