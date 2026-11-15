@@ -3,10 +3,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Testing
-.coverage
-htmlcov/
-
 # Virtual environments
 .venv/
 venv/
