@@ -59,6 +59,7 @@ def checkout_equipment():
 
     notification_sent = False
     renter_email = getattr(rental, "renter.email", None)
+
     if renter_email:
         notification_sent = send_notification(
             recipient=rental["renter.email"],
@@ -72,7 +73,7 @@ def checkout_equipment():
     if not notification_sent:
         response_data["notification_sent"] = "The rental has been returned, but no notification has been sent."
 
-    return jsonify(rental.to_dict()), 201
+    return jsonify(rental.to_dict()), 201, {"status": "successful", "notified": notification_sent}
 
 
 @rentals_bp.route("/<int:rental_id>/return", methods=["PUT"])
