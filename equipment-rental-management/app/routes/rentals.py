@@ -71,7 +71,7 @@ def checkout_equipment():
     response_data["notification_sent"] = notification_sent
     
     if not notification_sent:
-        response_data["notification_sent"] = "The rental has been returned, but no notification has been sent."
+        response_data["notification_sent"] = "The rental has been checked out, but no notification has been sent."
 
     rental_dict = rental.to_dict()
     rental_dict.update({"status": "successful", "notified": notification_sent})
