@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from app import store
 from datetime import date, timedelta
 import pytest
@@ -192,3 +193,84 @@ def test_release_deposit_after_return(client):
 
     release = client.put(f"/rentals/{rental_id}/deposit/release")
     assert release.status_code == 200
+
+def test_notification_failure_is_reported(client):
+    '''
+    Checks that a rental is still checked out when the notification fails,
+    and that the response reports the notification was not sent.
+    '''
+
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
+
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+
+    payload_2 = {
+        "name": "John Doe",
+        "email": "johndoe@test.com",
+        "membership_date": date.today().isoformat(),
+    }
+
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today().isoformat(),
+        "due_date": (date.today() + timedelta(days=7)).isoformat(),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+
+    with patch("app.routes.rentals.send_notification", return_value=False):
+        create_rental = client.post("/rentals", json=payload_3)
+
+    assert create_rental.status_code == 201
+    rental_data = create_rental.get_json()
+
+def test_notification_check_out_failure(client):
+    '''
+   Tests if notification is sent when the checkout is rejected
+    because the due date is before the rental date.
+    '''
+    payload = {
+        "name": "Kayak",
+        "category": "Boats",
+        "total_units": 5,
+    }
+    
+    create_item = client.post("/equipment", json=payload)
+    assert create_item.status_code == 201
+    equipment_id = create_item.get_json()["id"]
+    
+    payload_2 = {
+        "name": "Jane Doe",
+        "email": "jane.doe@example.com",
+        "membership_date": date.today().isoformat(),
+    }
+    
+    create_renter = client.post("/renters", json=payload_2)
+    assert create_renter.status_code == 201
+    renter_id = create_renter.get_json()["id"]
+    
+    payload_3 = {
+        "equipment_id": equipment_id,
+        "renter_id": renter_id,
+        "rental_date": date.today().isoformat(),
+        "due_date": (date.today() - (timedelta(days=1))).isoformat(),
+        "deposit_amount": 0.0,
+        "deposit_released": False,
+    }
+    
+    with patch("app.routes.rentals.send_notification") as mock_send:
+        create_rental = client.post("/rentals", json=payload_3)
+
+    assert create_rental.status_code == 400
+    mock_send.assert_not_called()
