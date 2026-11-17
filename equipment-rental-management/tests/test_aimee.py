@@ -1,5 +1,6 @@
 # Tests
 from datetime import date, timedelta
+from app.models.rental import Rental
 import pytest
 
 def test_listing_all_equipment(client):
@@ -365,3 +366,4 @@ def test_checkout_invalid_ID(client):
     
     create_rental = client.post("/store_id", json=payload_3)
     assert create_rental.status_code == 400
+

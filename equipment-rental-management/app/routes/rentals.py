@@ -63,7 +63,7 @@ def checkout_equipment():
     if renter_email:
         notification_sent = send_notification(
             recipient=rental["renter.email"],
-            subject="[Trailside Outdoor Gear Rental]: Rental Checked Out Successfully!",
+            subject="Rental Checked Out Successfully!",
             message=f"Your rental #{rental_id} has been checked out successfully."
         )
     
@@ -71,9 +71,12 @@ def checkout_equipment():
     response_data["notification_sent"] = notification_sent
     
     if not notification_sent:
-        response_data["notification_sent"] = "The rental has been returned, but no notification has been sent."
+        response_data["notification_sent"] = "The rental has been checked out, but no notification has been sent."
 
-    return jsonify(rental.to_dict()), 201, {"status": "successful", "notified": notification_sent}
+    rental_dict = rental.to_dict()
+    rental_dict.update({"status": "successful", "notified": notification_sent})
+
+    return jsonify(rental_dict), 201
 
 
 @rentals_bp.route("/<int:rental_id>/return", methods=["PUT"])
