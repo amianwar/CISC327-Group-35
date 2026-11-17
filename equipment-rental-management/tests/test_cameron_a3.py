@@ -80,29 +80,6 @@ def test_add_and_return_rental_in_window(client):
     response = client.get("/ui/rentals")
     assert response.status_code == 200
 
-def test_return_rental(client):
-    '''
-    Checks that a rental POSTed to /rentals can be returned with PUT and that
-    the unit is added back.
-    '''
-
-    payload = {
-        "name": "Kayak",
-        "category": "Boats",
-        "total_units": 5,
-    }
-
-    create_item = client.post("/equipment", json=payload)
-    assert create_item.status_code == 201
-    equipment_id = create_item.get_json()["id"]
-
-    payload_2 = {
-        "equipment_id": equipment_id,
-        "renter_id": 1,
-        "rental_date": date.today().isoformat(),
-        "due_date": (date.today() + timedelta(days=7)).isoformat(),
-    }
-
 def test_extend_rental(client):
     '''
     Checks that a rental POSTed to /rentals can be extended with PUT.
