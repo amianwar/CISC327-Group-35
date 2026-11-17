@@ -6,10 +6,6 @@ def test_home_page_loads(client):
     response = client.get("/")
     assert response.status_code == 200
 
-def test_equipment_page_loads(client):
-    response = client.get("/ui/equipment")
-    assert response.status_code == 200
-
 def test_add_and_delete_equipment_in_window(client):
     '''
     Checks that equipment POSTed to /ui/equipment is stored and listed,
@@ -29,11 +25,7 @@ def test_add_and_delete_equipment_in_window(client):
     delete_equipment = client.post(f"/ui/equipment/{equipment_id}/delete")
     assert delete_equipment.status_code == 302
 
-    page = client.get("/ui/equipment")
-    assert page.status_code == 200
-
-def test_renters_page_loads(client):
-    response = client.get("/ui/renters")
+    response = client.get("/ui/equipment")
     assert response.status_code == 200
 
 def test_add_and_delete_renter_in_window(client):
@@ -54,11 +46,7 @@ def test_add_and_delete_renter_in_window(client):
     delete_renter = client.post(f"/ui/renters/{renter_id}/delete")
     assert delete_renter.status_code == 302
 
-    page = client.get("/ui/renters")
-    assert page.status_code == 200
-
-def test_rentals_page_loads(client):
-    response = client.get("/ui/rentals")
+    response = client.get("/ui/renters")
     assert response.status_code == 200
 
 def test_add_and_return_rental_in_window(client):
@@ -88,8 +76,8 @@ def test_add_and_return_rental_in_window(client):
     return_rental = client.post(f"/ui/rentals/{rental_id}/return")
     assert return_rental.status_code == 302
 
-    page = client.get("/ui/rentals")
-    assert page.status_code == 200
+    response = client.get("/ui/rentals")
+    assert response.status_code == 200
 
 def test_return_rental(client):
     '''
