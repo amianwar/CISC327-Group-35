@@ -63,7 +63,7 @@ def checkout_equipment():
     if renter_email:
         notification_sent = send_notification(
             recipient=rental["renter.email"],
-            subject="[Trailside Outdoor Gear Rental]: Rental Checked Out Successfully!",
+            subject="Rental Checked Out Successfully!",
             message=f"Your rental #{rental_id} has been checked out successfully."
         )
     
